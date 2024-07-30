@@ -17,7 +17,7 @@ def run_500(time=200):
     for i in range(time):
         i *= i
 
-@profiling()
+@profiling(logger=logger, log_args=True, log_start=True)
 def sum(*args):
     sum =0
     for i in args:

@@ -4,7 +4,7 @@ from contextlib import suppress
 from functools import wraps
 from inspect import iscoroutinefunction
 from logging import Logger
-from typing import Callable
+from typing import Callable, Optional
 
 
 def get_class(method):
@@ -17,85 +17,64 @@ class Profiler:
     def __init__(
         self,
         function: Callable,
-        args,
-        kwargs,
-        logger: Logger,
-        log_start: bool,
-        log_args: bool,
-        log_kwargs: str,
+        args: tuple,
+        kwargs: dict,
+        logger: Optional[Logger] = None,
+        log_start: bool = True,
+        log_args: bool = False,
+        log_kwargs: Optional[str] = None,
     ) -> None:
-        self.main_function = function
+        self.function = function
         self.args = args
         self.kwargs = kwargs
-
         self.logger = logger
         self.log_start = log_start
         self.log_args = log_args
         self.log_kwargs = log_kwargs
+        self.start_time = 0.0
 
-    def log_arguments(self):
-        print_args = ""
+    def _format_arguments(self) -> tuple[str, str]:
+        print_args = f"args={str(self.args)}" if self.log_args else ""
         print_kwargs = ""
-
-        with suppress(Exception):
-            if self.log_args:
-                print_args = f"print_args={str(self.args)}"
-
-            if self.log_kwargs == "all":
-                print_kwargs = f"print_kwargs={str(self.kwargs)}"
-            elif (
-                self.log_kwargs
-            ):  # Changed condition to check if log_kwargs is not None
-                print_kwargs = f"print_kwargs={self.log_kwargs}:{self.kwargs.get(self.log_kwargs, None)}"
-
+        
+        if self.log_kwargs == "all":
+            print_kwargs = f"kwargs={str(self.kwargs)}"
+        elif self.log_kwargs:
+            print_kwargs = f"{self.log_kwargs}={self.kwargs.get(self.log_kwargs)}"
+        
         return print_args, print_kwargs
 
-    def start_log_logic(self):
+    def _get_function_name(self) -> str:
+        cls = self.function.__self__.__class__ if hasattr(self.function, '__self__') else None
+        return f"{cls.__name__}.{self.function.__name__}" if cls else self.function.__name__
+
+    def _log_message(self, action: str, run_time: Optional[float] = None) -> None:
+        if not self.logger:
+            return
+
+        func_name = self._get_function_name()
+        args, kwargs = self._format_arguments()
+        
+        message = f"{action} {func_name}()"
+        if run_time is not None:
+            message += f" in {run_time:.4f} secs"
+        if args:
+            message += f", {args}"
+        if kwargs:
+            message += f", {kwargs}"
+
+        print(message)
+        self.logger.info(message)
+
+    def start(self) -> None:
         self.start_time = time.perf_counter()
+        if self.log_start:
+            self._log_message("Starting")
 
-        print_args, print_kwargs = self.log_arguments()
-        if self.log_start and self.logger:
-            cls = get_class(self.main_function)
-            value_to_log = (
-                f"Starting {cls.__name__}.{self.main_function.__name__}()"
-                if cls
-                else f"Started {self.main_function.__name__}()"
-            )
+    def end(self) -> None:
+        run_time = time.perf_counter() - self.start_time
+        self._log_message("Finished", run_time)
 
-            if print_args:
-                value_to_log += f", {print_args}"
-
-            if print_kwargs:
-                value_to_log += f", {print_kwargs}"
-
-            value_to_log += "\n"
-            print(value_to_log)
-            self.logger.info(value_to_log)
-
-    def end_log_logic(
-        self,
-    ):
-        end_time = time.perf_counter()
-        run_time = end_time - self.start_time
-
-        print_args, print_kwargs = self.log_arguments()
-        if self.logger:
-            cls = get_class(self.main_function)
-            value_to_log = (
-                f"Finished {cls.__name__}.{self.main_function.__name__}() in {run_time:.4f} secs"
-                if cls
-                else f"Finished {self.main_function.__name__}() in {run_time:.4f} secs"
-            )
-
-            if print_args:
-                value_to_log += f", {print_args}"
-
-            if print_kwargs:
-                value_to_log += f", {print_kwargs}"
-
-            value_to_log += "\n"
-            print(value_to_log)
-            self.logger.info(value_to_log)
 
 
 def profiling(
@@ -124,17 +103,17 @@ def profiling(
         @wraps(f)
         def wrapper(*args, **kwargs):
             profiler = create_profiler(*args, **kwargs)
-            profiler.start_log_logic()
+            profiler.start()
             output_value = f(*args, **kwargs)
-            profiler.end_log_logic()
+            profiler.end()
             return output_value
 
         @wraps(f)
         async def async_wrapper(*args, **kwargs):
             profiler = create_profiler(*args, **kwargs)
-            profiler.start_log_logic()
+            profiler.start()
             output_value = await f(*args, **kwargs)
-            profiler.end_log_logic()
+            profiler.end()
             return output_value
 
         return async_wrapper if iscoroutinefunction(f) else wrapper
