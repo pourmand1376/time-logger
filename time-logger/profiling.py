@@ -51,6 +51,8 @@ class Profiler:
         return print_args, print_kwargs
 
     def start_log_logic(self):
+        self.start_time = time.perf_counter()
+
         print_args, print_kwargs = self.log_arguments()
         if self.log_start and self.logger:
             cls = get_class(self.main_function)
@@ -109,38 +111,28 @@ def profiling(
     """
 
     def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            profiler = Profiler(
-                f,
-                args,
-                kwargs,
+        def create_profiler(*args, **kwargs):
+            return Profiler(
+                function=f,
+                args=args,
+                kwargs=kwargs,
                 logger=logger,
                 log_start=log_start,
                 log_args=log_args,
                 log_kwargs=log_kwargs,
             )
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            profiler = create_profiler(*args, **kwargs)
             profiler.start_log_logic()
-            start_time = time.perf_counter()
-            profiler.start_time = start_time
             output_value = f(*args, **kwargs)
             profiler.end_log_logic()
             return output_value
 
         @wraps(f)
         async def async_wrapper(*args, **kwargs):
-            profiler = Profiler(
-                f,
-                args,
-                kwargs,
-                logger=logger,
-                log_start=log_start,
-                log_args=log_args,
-                log_kwargs=log_kwargs,
-            )
+            profiler = create_profiler(*args, **kwargs)
             profiler.start_log_logic()
-            start_time = time.perf_counter()
-            profiler.start_time = start_time
             output_value = await f(*args, **kwargs)
             profiler.end_log_logic()
             return output_value
