@@ -30,6 +30,15 @@ def sum(*args):
 def multiply(a, b, c=1):
     return a * b * c
 
+@profiling(
+    custom_message="Processing order {order_id} for customer {customer_name}"
+)
+def process_order(order_id, customer_name, items):
+    # Function implementation
+    pass
+
+process_order(500, 'akbar', ['milk'])
+
 
 run_400(20)
 run_500(20)

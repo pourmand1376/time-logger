@@ -2,8 +2,8 @@ import time
 from functools import wraps
 from inspect import iscoroutinefunction, signature
 from logging import Logger
-from typing import Callable, Optional, Union, List
-
+from typing import Callable, Optional, Union, List, Dict
+import re
 
 class Profiler:
     def __init__(
@@ -15,32 +15,37 @@ class Profiler:
         log_start: bool = True,
         log_variables: Optional[List[str]] = None,
         log_all_args: bool = False,
+        custom_message: Optional[str] = None,
     ) -> None:
         self.function = function
         self.args = args
         self.kwargs = kwargs
         self.logger = logger
         self.log_start = log_start
-        self.log_variables = log_variables or []
         self.log_all_args = log_all_args
+        self.custom_message = custom_message
+        self.log_variables = log_variables if log_variables is not None else self._extract_variables_from_custom_message()
         self.start_time = 0.0
         self.module_name = self._get_module_name()
 
-    def _format_variables(self) -> str:
+    def _extract_variables_from_custom_message(self) -> List[str]:
+        if not self.custom_message:
+            return []
+        return re.findall(r'\{(\w+)\}', self.custom_message)
+
+    def _format_variables(self) -> Dict[str, str]:
         func_signature = signature(self.function)
         bound_args = func_signature.bind(*self.args, **self.kwargs)
         bound_args.apply_defaults()
 
         if self.log_all_args:
-            return ", ".join(f"{k}={repr(v)}" for k, v in bound_args.arguments.items())
+            return {k: repr(v) for k, v in bound_args.arguments.items()}
 
-        logged_vars = []
-        for var_name in self.log_variables:
-            if var_name in bound_args.arguments:
-                value = bound_args.arguments[var_name]
-                logged_vars.append(f"{var_name}={repr(value)}")
-
-        return ", ".join(logged_vars)
+        return {
+            var_name: repr(bound_args.arguments[var_name])
+            for var_name in self.log_variables
+            if var_name in bound_args.arguments
+        }
 
     def _get_module_name(self) -> str:
         module = self.function.__module__
@@ -77,14 +82,25 @@ class Profiler:
     def _log_message(
         self, action: str, run_time: Optional[float] = None
     ) -> None:
-        func_name = self._get_full_function_name()
-        variables = self._format_variables()
+        formatted_vars = self._format_variables()
 
-        message = f"{action} {func_name}()"
+        if self.custom_message:
+            try:
+                message = self.custom_message.format(**formatted_vars)
+            except KeyError as e:
+                message = f"Error in custom message: {str(e)}. Using default format."
+                self.custom_message = None  # Fall back to default format
+
+        if not self.custom_message:
+            func_name = self._get_full_function_name()
+            variables = ", ".join(f"{k}={v}" for k, v in formatted_vars.items())
+
+            message = f"{action} {func_name}()"
+            if variables:
+                message += f" with args: {variables}"
+
         if run_time is not None:
-            message += f" in {run_time:.4f} secs"
-        if variables:
-            message += f" with args: {variables}"
+            message += f" (execution time: {run_time:.4f} secs)"
 
         self._log(message)
 
@@ -103,12 +119,17 @@ def profiling(
     log_start: bool = False,
     log_variables: Optional[List[str]] = None,
     log_all_args: bool = False,
+    custom_message: Optional[str] = None,
 ):
     """
     We will write all the result into logger if provided, otherwise use print
     log_start: If True, log when the function starts.
-    log_variables: A list of variable names to log. These can be positional or keyword arguments of the decorated function.
-    log_all_args: If True, log all arguments passed to the function, regardless of log_variables.
+    log_variables: A list of variable names to log when using the default message format.
+                   If custom_message is provided, this parameter is ignored and variables
+                   are extracted from the custom_message.
+    log_all_args: If True, log all arguments passed to the function.
+    custom_message: If provided, this message will be used instead of the default logging format.
+                    Variables can be included using curly braces, e.g., {variable_name}.
     """
 
     def decorator(f):
@@ -121,6 +142,7 @@ def profiling(
                 log_start=log_start,
                 log_variables=log_variables,
                 log_all_args=log_all_args,
+                custom_message=custom_message,
             )
 
         @wraps(f)
