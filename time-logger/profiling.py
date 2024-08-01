@@ -14,6 +14,7 @@ class Profiler:
         logger: Optional[Logger] = None,
         log_start: bool = True,
         log_variables: Optional[List[str]] = None,
+        log_all_args: bool = False,
     ) -> None:
         self.function = function
         self.args = args
@@ -21,16 +22,17 @@ class Profiler:
         self.logger = logger
         self.log_start = log_start
         self.log_variables = log_variables or []
+        self.log_all_args = log_all_args
         self.start_time = 0.0
         self.module_name = self._get_module_name()
 
     def _format_variables(self) -> str:
-        if not self.log_variables:
-            return ""
-
         func_signature = signature(self.function)
         bound_args = func_signature.bind(*self.args, **self.kwargs)
         bound_args.apply_defaults()
+
+        if self.log_all_args:
+            return ", ".join(f"{k}={repr(v)}" for k, v in bound_args.arguments.items())
 
         logged_vars = []
         for var_name in self.log_variables:
@@ -82,7 +84,7 @@ class Profiler:
         if run_time is not None:
             message += f" in {run_time:.4f} secs"
         if variables:
-            message += f", {variables}"
+            message += f" with args: {variables}"
 
         self._log(message)
 
@@ -100,11 +102,13 @@ def profiling(
     logger: Optional[Logger] = None,
     log_start: bool = False,
     log_variables: Optional[List[str]] = None,
+    log_all_args: bool = False,
 ):
     """
     We will write all the result into logger if provided, otherwise use print
     log_start: If True, log when the function starts.
     log_variables: A list of variable names to log. These can be positional or keyword arguments of the decorated function.
+    log_all_args: If True, log all arguments passed to the function, regardless of log_variables.
     """
 
     def decorator(f):
@@ -116,6 +120,7 @@ def profiling(
                 logger=logger,
                 log_start=log_start,
                 log_variables=log_variables,
+                log_all_args=log_all_args,
             )
 
         @wraps(f)
