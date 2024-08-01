@@ -5,24 +5,24 @@ from profiling import profiling
 logger = logging.getLogger()
 logger.addHandler(logging.StreamHandler())
 
-@profiling(log_start=True)
+@profiling(log_start=True, log_variables=['time'])
 def run_400(time=200):
     for i in range(time):
         i *= i
 
 
-@profiling(logger=None, log_start=False)
+@profiling(logger=None, log_start=False, log_variables=['time'])
 def run_500(time=200):
     for i in range(time):
         i *= i
 
 
-@profiling(logger=logger, log_args=True, log_start=True)
+@profiling(logger=logger, log_variables=['args'], log_start=True)
 def sum(*args):
-    sum = 0
+    total = 0
     for i in args:
-        sum += i
-    return sum
+        total += i
+    return total
 
 
 run_400(20)

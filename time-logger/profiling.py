@@ -1,8 +1,8 @@
 import time
 from functools import wraps
-from inspect import iscoroutinefunction
+from inspect import iscoroutinefunction, signature
 from logging import Logger
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, List
 
 
 class Profiler:
@@ -13,31 +13,32 @@ class Profiler:
         kwargs: dict,
         logger: Optional[Logger] = None,
         log_start: bool = True,
-        log_args: bool = False,
-        log_kwargs: Optional[str] = None,
+        log_variables: Optional[List[str]] = None,
     ) -> None:
         self.function = function
         self.args = args
         self.kwargs = kwargs
         self.logger = logger
         self.log_start = log_start
-        self.log_args = log_args
-        self.log_kwargs = log_kwargs
+        self.log_variables = log_variables or []
         self.start_time = 0.0
         self.module_name = self._get_module_name()
 
-    def _format_arguments(self) -> tuple[str, str]:
-        print_args = f"args={str(self.args)}" if self.log_args else ""
-        print_kwargs = ""
+    def _format_variables(self) -> str:
+        if not self.log_variables:
+            return ""
 
-        if self.log_kwargs == "all":
-            print_kwargs = f"kwargs={str(self.kwargs)}"
-        elif self.log_kwargs:
-            print_kwargs = (
-                f"{self.log_kwargs}={self.kwargs.get(self.log_kwargs)}"
-            )
+        func_signature = signature(self.function)
+        bound_args = func_signature.bind(*self.args, **self.kwargs)
+        bound_args.apply_defaults()
 
-        return print_args, print_kwargs
+        logged_vars = []
+        for var_name in self.log_variables:
+            if var_name in bound_args.arguments:
+                value = bound_args.arguments[var_name]
+                logged_vars.append(f"{var_name}={repr(value)}")
+
+        return ", ".join(logged_vars)
 
     def _get_module_name(self) -> str:
         module = self.function.__module__
@@ -75,15 +76,13 @@ class Profiler:
         self, action: str, run_time: Optional[float] = None
     ) -> None:
         func_name = self._get_full_function_name()
-        args, kwargs = self._format_arguments()
+        variables = self._format_variables()
 
         message = f"{action} {func_name}()"
         if run_time is not None:
             message += f" in {run_time:.4f} secs"
-        if args:
-            message += f", {args}"
-        if kwargs:
-            message += f", {kwargs}"
+        if variables:
+            message += f", {variables}"
 
         self._log(message)
 
@@ -100,13 +99,12 @@ class Profiler:
 def profiling(
     logger: Optional[Logger] = None,
     log_start: bool = False,
-    log_args: bool = False,
-    log_kwargs: Optional[str] = None,
+    log_variables: Optional[List[str]] = None,
 ):
     """
     We will write all the result into logger if provided, otherwise use print
-    log_args can be true or false. If it is true, it will print all the args passed to the function in the log.
-    log_kwargs can be None, "all" or argument_name to be logged.
+    log_start: If True, log when the function starts.
+    log_variables: A list of variable names to log. These can be positional or keyword arguments of the decorated function.
     """
 
     def decorator(f):
@@ -117,8 +115,7 @@ def profiling(
                 kwargs=kwargs,
                 logger=logger,
                 log_start=log_start,
-                log_args=log_args,
-                log_kwargs=log_kwargs,
+                log_variables=log_variables,
             )
 
         @wraps(f)
