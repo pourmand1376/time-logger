@@ -4,4 +4,4 @@ help:
 
 .PHONY:
 test:
-	python time-logger/test.py
+	python tests/test_profiling.py

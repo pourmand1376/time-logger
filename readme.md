@@ -54,4 +54,4 @@ def my_function():
 
 ## Examples
 
-See the `test.py` file for more examples.
+See the `tests/test_profiling.py` file for more examples.
