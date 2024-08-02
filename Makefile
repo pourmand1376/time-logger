@@ -5,3 +5,6 @@ help:
 .PHONY:
 test:
 	python tests/test_profiling.py
+
+run_test:
+	pytest tests/tests_profiling.py
