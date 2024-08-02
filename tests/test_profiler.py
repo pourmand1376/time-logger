@@ -147,3 +147,27 @@ def test_profiler_with_lambda():
     lambda_func = lambda x: x * 2
     profiler = Profiler(lambda_func, (2,), {})
     assert profiler._get_function_name() == "<lambda>"
+
+def test_profiler_with_invalid_argument(logger):
+    logger, log_capture = logger
+    
+    def test_func(a, b):
+        pass
+    
+    # Pass an invalid argument 'c' which is not a parameter of test_func
+    profiler = Profiler(test_func, (1, 2), {}, logger, log_variables=['a', 'b', 'c'])
+    
+    # This should not raise an error
+    profiler._log_message("Starting")
+    
+    log_output = log_capture.getvalue()
+    
+    # Check that the valid arguments are logged
+    assert "Starting tests.test_profiler.test_func() with args: a=1, b=2" in log_output
+    
+    # The invalid argument 'c' should not appear in the log
+    assert "c=" not in log_output
+    
+    # Ensure no error message is logged
+    assert "Error in custom message" not in log_output
+    assert "Using default format" not in log_output

@@ -2,8 +2,9 @@ import time
 from functools import wraps
 from inspect import iscoroutinefunction, signature
 from logging import Logger
-from typing import Callable, Optional, Union, List, Dict
+from typing import Callable, Optional, List, Dict
 import re
+import traceback
 
 class Profiler:
     def __init__(
@@ -79,6 +80,15 @@ class Profiler:
         else:
             print(message)
 
+    def _log_error(self, error:Exception) -> None:
+        if self.logger:
+            self.logger.exception(repr(error), exc_info=True)
+        else:
+            print(f"{type(error).__name__} at line {error.__traceback__.tb_lineno} of {__file__}: {error}")
+
+        traceback.print_exc()
+
+
     def _log_message(
         self, action: str, run_time: Optional[float] = None
     ) -> None:
@@ -105,13 +115,21 @@ class Profiler:
         self._log(message)
 
     def start(self) -> None:
-        self.start_time = time.perf_counter()
-        if self.log_start:
-            self._log_message("Starting")
+        try:
+            self.start_time = time.perf_counter()
+            if self.log_start:
+                self._log_message("Starting")
+        except Exception as error:
+            self._log_error(error)
 
     def end(self) -> None:
-        run_time = time.perf_counter() - self.start_time
-        self._log_message("Finished", run_time)
+        try:
+            run_time = time.perf_counter() - self.start_time
+            self._log_message("Finished", run_time)
+        except Exception as error:
+            self._log_error(error)
+
+
 
 
 def profiling(
