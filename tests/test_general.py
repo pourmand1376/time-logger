@@ -61,7 +61,7 @@ def test_get_module_name():
         pass
 
     profiler = Profiler(test_func, (), {})
-    assert profiler._get_module_name() == "tests.tests_profiling"
+    assert profiler._get_module_name() == "tests.test_general"
 
 def test_get_function_name():
     def test_func():
@@ -75,7 +75,7 @@ def test_get_full_function_name():
         pass
 
     profiler = Profiler(test_func, (), {})
-    assert profiler._get_full_function_name() == "tests.tests_profiling.test_func"
+    assert profiler._get_full_function_name() == "tests.test_general.test_func"
 
 @patch('time.perf_counter')
 def test_start_and_end(mock_perf_counter, logger):
@@ -90,8 +90,8 @@ def test_start_and_end(mock_perf_counter, logger):
     profiler.end()
 
     log_output = log_capture.getvalue()
-    assert "Starting tests.tests_profiling.test_func() with args: a=1, b=2" in log_output
-    assert "Finished tests.tests_profiling.test_func() with args: a=1, b=2 (execution time: 1.0000 secs)" in log_output
+    assert "Starting tests.test_general.test_func() with args: a=1, b=2" in log_output
+    assert "Finished tests.test_general.test_func() with args: a=1, b=2 (execution time: 1.0000 secs)" in log_output
 
 def test_custom_message(logger):
     logger, log_capture = logger
@@ -117,8 +117,8 @@ def test_profiling_decorator(mock_perf_counter, logger):
 
     assert result == 3
     log_output = log_capture.getvalue()
-    assert "Starting tests.tests_profiling.test_func() with args: a=1" in log_output
-    assert "Finished tests.tests_profiling.test_func() with args: a=1 (execution time: 1.0000 secs)" in log_output
+    assert "Starting tests.test_general.test_func() with args: a=1" in log_output
+    assert "Finished tests.test_general.test_func() with args: a=1 (execution time: 1.0000 secs)" in log_output
 
 @pytest.mark.asyncio
 @patch('time.perf_counter')
@@ -134,8 +134,8 @@ async def test_profiling_decorator_async(mock_perf_counter, logger):
     result = await test_func(1, 2)
     assert result == 3
     log_output = log_capture.getvalue()
-    assert "Starting tests.tests_profiling.test_func() with args: a=1" in log_output
-    assert "Finished tests.tests_profiling.test_func() with args: a=1 (execution time: 1.0000 secs)" in log_output
+    assert "Starting tests.test_general.test_func() with args: a=1" in log_output
+    assert "Finished tests.test_general.test_func() with args: a=1 (execution time: 1.0000 secs)" in log_output
 
 def test_profiling_decorator_log_all_args(logger):
     logger, log_capture = logger
@@ -148,7 +148,7 @@ def test_profiling_decorator_log_all_args(logger):
 
     assert result == 7
     log_output = log_capture.getvalue()
-    assert "Finished tests.tests_profiling.test_func() with args: a=1, b=2, c=4" in log_output
+    assert "Finished tests.test_general.test_func() with args: a=1, b=2, c=4" in log_output
 
 def test_profiling_decorator_custom_message(logger):
     logger, log_capture = logger
