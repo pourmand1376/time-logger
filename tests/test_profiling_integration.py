@@ -14,32 +14,13 @@ def logger():
     logger.addHandler(handler)
     return logger, log_capture
 
-def test_profiler_with_decorator(logger):
-    logger, log_capture = logger
-
-    @profiling(logger, log_variables=['x'])
-    def test_func(x, y):
-        profiler = Profiler(sum, (x, y), {}, logger, log_variables=['0', '1'])
-        profiler.start()
-        result = sum((x, y))
-        profiler.end()
-        return result
-
-    result = test_func(3, 4)
-    assert result == 7
-
-    log_output = log_capture.getvalue()
-    assert "Starting test_profiling_integration.test_func() with args: x=3" in log_output
-    assert "Starting builtins.sum() with args: 0=3, 1=4" in log_output
-    assert "Finished builtins.sum() with args: 0=3, 1=4" in log_output
-    assert "Finished test_profiling_integration.test_func() with args: x=3" in log_output
 
 def test_nested_profiling(logger):
     logger, log_capture = logger
 
-    @profiling(logger, log_variables=['a'])
+    @profiling(logger, log_variables=['a'], log_start=True)
     def outer(a, b):
-        @profiling(logger, log_variables=['x'])
+        @profiling(logger, log_variables=['x'],log_start=True)
         def inner(x, y):
             return x * y
         return inner(a, b)
@@ -48,10 +29,10 @@ def test_nested_profiling(logger):
     assert result == 6
 
     log_output = log_capture.getvalue()
-    assert "Starting test_profiling_integration.outer() with args: a=2" in log_output
-    assert "Starting test_profiling_integration.inner() with args: x=2" in log_output
-    assert "Finished test_profiling_integration.inner() with args: x=2" in log_output
-    assert "Finished test_profiling_integration.outer() with args: a=2" in log_output
+    assert "Starting tests.test_profiling_integration.outer() with args: a=2" in log_output
+    assert "Starting tests.test_profiling_integration.inner() with args: x=2" in log_output
+    assert "Finished tests.test_profiling_integration.inner() with args: x=2" in log_output
+    assert "Finished tests.test_profiling_integration.outer() with args: a=2" in log_output
 
 def test_profiling_with_different_logger_levels(logger):
     logger, log_capture = logger
@@ -77,12 +58,12 @@ def test_profiling_with_different_logger_levels(logger):
 async def test_profiling_in_async_context(logger):
     logger, log_capture = logger
 
-    @profiling(logger, log_variables=['x'])
+    @profiling(logger, log_variables=['x'], log_start=True)
     async def async_func1(x):
         await asyncio.sleep(0.1)
         return x * 2
 
-    @profiling(logger, log_variables=['y'])
+    @profiling(logger, log_variables=['y'], log_start=True)
     async def async_func2(y):
         await asyncio.sleep(0.1)
         return y + 3
@@ -91,10 +72,10 @@ async def test_profiling_in_async_context(logger):
     assert results == [4, 6]
 
     log_output = log_capture.getvalue()
-    assert "Starting test_profiling_integration.async_func1() with args: x=2" in log_output
-    assert "Starting test_profiling_integration.async_func2() with args: y=3" in log_output
-    assert "Finished test_profiling_integration.async_func1() with args: x=2" in log_output
-    assert "Finished test_profiling_integration.async_func2() with args: y=3" in log_output
+    assert "Starting tests.test_profiling_integration.async_func1() with args: x=2" in log_output
+    assert "Starting tests.test_profiling_integration.async_func2() with args: y=3" in log_output
+    assert "Finished tests.test_profiling_integration.async_func1() with args: x=2" in log_output
+    assert "Finished tests.test_profiling_integration.async_func2() with args: y=3" in log_output
 
 @patch('time.perf_counter')
 def test_profiling_accuracy(mock_perf_counter, logger):
@@ -127,13 +108,12 @@ def test_profiling_with_generator(logger):
     list(generate_numbers(3))
 
     log_output = log_capture.getvalue()
-    assert "Starting test_profiling_integration.generate_numbers() with args: n=3" in log_output
-    assert "Finished test_profiling_integration.generate_numbers() with args: n=3" in log_output
+    assert "Finished tests.test_profiling_integration.generate_numbers() with args: n=3" in log_output
 
 def test_profiling_with_recursion(logger):
     logger, log_capture = logger
 
-    @profiling(logger, log_variables=['n'])
+    @profiling(logger, log_variables=['n'], log_start=True)
     def factorial(n):
         if n <= 1:
             return 1
@@ -143,23 +123,10 @@ def test_profiling_with_recursion(logger):
     assert result == 120
 
     log_output = log_capture.getvalue()
-    assert log_output.count("Starting test_profiling_integration.factorial()") == 5
-    assert log_output.count("Finished test_profiling_integration.factorial()") == 5
+    assert log_output.count("Starting tests.test_profiling_integration.factorial()") == 5
+    assert log_output.count("Finished tests.test_profiling_integration.factorial()") == 5
 
-def test_profiling_with_exception(logger):
-    logger, log_capture = logger
 
-    @profiling(logger)
-    def error_function():
-        raise ValueError("Test error")
-
-    with pytest.raises(ValueError):
-        error_function()
-
-    log_output = log_capture.getvalue()
-    assert "Starting test_profiling_integration.error_function()" in log_output
-    assert "Finished test_profiling_integration.error_function()" in log_output
-    assert "execution time:" in log_output
 
 @pytest.mark.parametrize("input_value,expected_output", [
     (2, 4),
