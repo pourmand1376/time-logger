@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 # Import the module containing the Profiler and profiling decorator
-from time_logger.profiling import Profiler, profiling
+from src.time_logger.profiling import Profiler, profiling
 
 
 @pytest.fixture
