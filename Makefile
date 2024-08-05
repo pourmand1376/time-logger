@@ -1,5 +1,8 @@
-CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
-
+ifeq ($(shell which conda),)
+    CONDA_ACTIVATE =
+else
+    CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+endif
 
 .PHONY: help
 help:
@@ -8,9 +11,11 @@ help:
 
 .PHONY: test
 test:
+	$(CONDA_ACTIVATE)
 	pytest tests/
 
 run: 
+	$(CONDA_ACTIVATE)
 	python run_examples.py
 
 clean: ## cleans generated files
