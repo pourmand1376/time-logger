@@ -26,6 +26,6 @@ jobs:
     - name: Build Project and Publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_TEST_PASSWORD }}
       run: |
         make publish_to_pypi_test

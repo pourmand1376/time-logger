@@ -12,8 +12,8 @@ where = ["src"]
 
 
 [project]
-name = "time_logger"
-version = "0.0.1"
+name = "pytime-logger"
+version = "0.0.2"
 authors = [
   { name="Amir Pourmand", email="pourmand1376@gmail.com" },
 ]
