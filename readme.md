@@ -12,13 +12,13 @@ This project provides a simple way to profile the execution time of your Python 
 ## Installation
 
 ```bash
-pip install -e .
+pip install pytime-logger
 ```
 
 ## Usage
 
 ```python
-from time_logger import profiling
+from time_logger.profiling import profiling
 
 # Basic usage
 @profiling()
