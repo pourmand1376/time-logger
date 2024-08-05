@@ -18,7 +18,7 @@ pip install pytime-logger
 ## Usage
 
 ```python
-from time_logger.profiling import profiling
+from time_logger import profiling
 
 # Basic usage
 @profiling()
@@ -54,4 +54,4 @@ def my_function():
 
 ## Examples
 
-See the `tests/test_profiling.py` file for more examples.
+See the `run_examples.py` file for more examples.

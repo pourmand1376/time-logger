@@ -4,7 +4,7 @@ import asyncio
 import logging
 from io import StringIO
 from concurrent.futures import ThreadPoolExecutor
-from src.time_logger.profiling import profiling
+from src.time_logger.profile import profiling
 
 @pytest.fixture
 def logger():

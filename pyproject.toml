@@ -13,13 +13,13 @@ where = ["src"]
 
 [project]
 name = "pytime-logger"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="Amir Pourmand", email="pourmand1376@gmail.com" },
 ]
 description = "This project provides a simple way to profile the execution time of your Python functions."
 
-readme = "README.md"
+readme = "readme.md"
 license = { file="LICENSE" }
 requires-python = ">=3.0"
 

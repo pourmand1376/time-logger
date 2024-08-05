@@ -2,7 +2,7 @@ import pytest
 import logging
 from io import StringIO
 from unittest.mock import patch, MagicMock
-from src.time_logger.profiling import Profiler
+from src.time_logger.profile import Profiler
 
 @pytest.fixture
 def logger():

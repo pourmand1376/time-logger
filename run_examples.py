@@ -1,6 +1,6 @@
 import logging
 
-from time_logger.profiling import profiling
+from src.time_logger import profiling
 
 logger = logging.getLogger()
 logger.addHandler(logging.StreamHandler())
@@ -44,17 +44,3 @@ run_400(20)
 run_500(20)
 sum(1, 2, 3, 4)
 multiply(2, 3, c=4)
-
-
-class NonStringConvertible:
-    def __str__(self):
-        raise ValueError("Cannot convert to string")
-    
-    def __repr__(self) -> str:
-        return self.__str__()
-
-@profiling(log_all_args=True)
-def test_func(a, b):
-    pass
-
-test_func(NonStringConvertible(),2)
