@@ -4,10 +4,11 @@ This project provides a simple way to profile the execution time of your Python 
 
 ## Features
 
-- Measure the execution time of functions with the `@profiling` decorator.
+- Measure the execution time of functions using the @profiling decorator.
 - Optionally log the start and end times of function execution.
 - Log specific variables or all arguments passed to the function.
-- Choose between using the standard `print` function or a custom logger for output.
+- Use the standard print function or a custom logger for output.
+- Provide a custom message template with placeholders for function arguments.
 
 ## Installation
 
@@ -50,6 +51,14 @@ logger.addHandler(handler)
 @profiling(logger=logger)
 def my_function():
     # Your code here
+
+# Provide a custom message template
+@profiling(
+    custom_message="Processing order {order_id} for customer {customer_name}"
+)
+def process_order(order_id, customer_name, items):
+    # Function implementation
+    pass
 ```
 
 ## Examples

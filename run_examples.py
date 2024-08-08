@@ -2,8 +2,11 @@ import logging
 
 from src.time_logger import profiling
 
-logger = logging.getLogger()
-logger.addHandler(logging.StreamHandler())
+import logging
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+logger.addHandler(handler)
 
 
 @profiling(log_start=True, log_variables=["time"], logger=logger)
@@ -44,3 +47,8 @@ run_400(20)
 run_500(20)
 sum(1, 2, 3, 4)
 multiply(2, 3, c=4)
+
+# Processing order 500 for customer 'akbar' (execution time: 0.0000 secs)
+# Finished main.run_500() (execution time: 0.0000 secs)
+# Starting main.multiply() with args: a=2, b=3, c=4
+# Finished main.multiply() with args: a=2, b=3, c=4 (execution time: 0.0000 secs)
